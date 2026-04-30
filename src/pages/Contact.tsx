@@ -8,7 +8,7 @@ import MeshBackground from "@/components/effects/MeshBackground";
 import Reveal from "@/components/effects/Reveal";
 import { useToast } from "@/hooks/use-toast";
 
-const API = "http://localhost:4000/api";
+const API = "https://codevalceno-backend.vercel.app/api";
 
 const projectTypes = ["Web Application", "Mobile App", "UI / UX Design", "Cloud & DevOps", "AI Integration", "Other"] as const;
 const budgets = ["< $5k", "$5k – $15k", "$15k – $50k", "$50k – $150k", "$150k+"] as const;
