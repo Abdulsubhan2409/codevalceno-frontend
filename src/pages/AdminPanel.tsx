@@ -5,7 +5,7 @@ import {
   Send, CheckCircle, ArrowLeft, ChevronDown,
 } from "lucide-react";
 
-const API = "http://localhost:4000/api";
+const API = "https://codevalceno-backend-n7k0sd3dl.vercel.app/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Project { id: number; title: string; type: string; country: string; status: string; tech: string[]; }
