@@ -6,6 +6,7 @@ import Particles from "@/components/effects/Particles";
 import TypingCodeCard from "@/components/effects/TypingCodeCard";
 import CountUp from "@/components/effects/CountUp";
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ROTATING_PHRASES = [
   "Digital Products",
@@ -51,10 +52,13 @@ const RotatingText = () => {
 };
 
 const Hero = () => {
+  const isMobile = useIsMobile();
+
   return (
     <section className="relative min-h-[100svh] overflow-hidden pt-24 md:pt-28">
       <MeshBackground />
-      <Particles count={50} />
+      {/* ✅ Fix 1: Fewer particles on mobile */}
+      <Particles count={isMobile ? 15 : 50} />
 
       <div className="container relative z-10 grid items-center gap-14 py-16 md:py-24 lg:grid-cols-[1.05fr_1fr]">
         {/* LEFT: copy */}
@@ -144,11 +148,12 @@ const Hero = () => {
 
         {/* RIGHT: code card + floating badges */}
         <div className="relative">
-          <TypingCodeCard />
+          {/* ✅ Fix 3: Hide heavy card on mobile */}
+          {!isMobile && <TypingCodeCard />}
 
-          {/* Floating badge top */}
+          {/* ✅ Fix 2: No infinite animations on mobile */}
           <motion.div
-            animate={{ y: [-6, 6, -6] }}
+            animate={isMobile ? {} : { y: [-6, 6, -6] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             className="absolute -top-4 -right-2 hidden items-center gap-2 rounded-full border border-primary/40 bg-surface/90 px-4 py-2 text-xs font-medium text-foreground backdrop-blur-md shadow-glow sm:inline-flex"
           >
@@ -156,9 +161,8 @@ const Hero = () => {
             Project Deployed
           </motion.div>
 
-          {/* Floating badge bottom */}
           <motion.div
-            animate={{ y: [6, -6, 6] }}
+            animate={isMobile ? {} : { y: [6, -6, 6] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
             className="absolute -bottom-5 -left-3 hidden items-center gap-2 rounded-full border border-secondary/40 bg-surface/90 px-4 py-2 text-xs font-medium text-foreground backdrop-blur-md sm:inline-flex"
             style={{ boxShadow: "0 0 24px hsl(262 83% 58% / 0.35)" }}
