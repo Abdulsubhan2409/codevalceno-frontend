@@ -75,7 +75,7 @@ const CTABanner = () => {
                   disableRemotePlayback
                   className="absolute inset-0 h-full w-full object-cover"
                 >
-                  <source src="/videos/codevalceno-coding-loop.mp4.mp4" type="video/mp4" />
+                  <source src="/videos/codevalceno-coding-loop.mp4" type="video/mp4" />
                 </video>
               </motion.div>
             </motion.div>
