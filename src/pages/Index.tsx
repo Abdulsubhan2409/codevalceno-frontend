@@ -9,7 +9,7 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <meta name="google-site-verification" content="lEL32DQdcWDBUpL4XDP95C0iO4VVZIweGoP0R3qaqd4" />
+       
         <title>CodeValceno — Software Studio Building Digital Products That Scale</title>
         <meta name="description" content="CodeValceno is a Khobar-based software studio engineering web, mobile and cloud products for ambitious teams across the GCC and beyond." />
         <link rel="canonical" href="https://codevalceno.com/" />
