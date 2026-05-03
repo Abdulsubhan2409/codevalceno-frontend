@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,6 +32,24 @@ const fieldClass =
 const ContactPage = () => {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
+
+  // ✅ Lazy map state
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapVisible, setMapVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setMapVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (mapRef.current) observer.observe(mapRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const {
     register,
@@ -300,24 +318,33 @@ const ContactPage = () => {
                 </ul>
               </div>
 
-              {/* MAP */}
-              <div className="relative overflow-hidden rounded-2xl border border-border bg-surface">
+              {/* MAP — ✅ Only loads when user scrolls to it */}
+              <div ref={mapRef} className="relative overflow-hidden rounded-2xl border border-border bg-surface">
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px"
                   style={{ background: "linear-gradient(90deg, transparent, hsl(184 100% 50%), transparent)" }}
                 />
                 <div className="aspect-[4/3] w-full">
-                  <iframe
-                    title="CodeValceno location — Al Khobar, Saudi Arabia"
-                    src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3577.3870024721436!2d50.20963667541786!3d26.281551377029!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMjbCsDE2JzUzLjYiTiA1MMKwMTInNDQuMCJF!5e0!3m2!1sen!2s!4v1777455631817!5m2!1sen!2s"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0, filter: "invert(0.92) hue-rotate(180deg) saturate(0.7) brightness(0.95)" }}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    allowFullScreen
-                  />
+                  {mapVisible ? (
+                    <iframe
+                      title="CodeValceno location — Al Khobar, Saudi Arabia"
+                      src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3577.3870024721436!2d50.20963667541786!3d26.281551377029!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMjbCsDE2JzUzLjYiTiA1MMKwMTInNDQuMCJF!5e0!3m2!1sen!2s!4v1777455631817!5m2!1sen!2s"
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0, filter: "invert(0.92) hue-rotate(180deg) saturate(0.7) brightness(0.95)" }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-surface">
+                      <div className="text-center">
+                        <MapPin className="mx-auto h-8 w-8 text-primary opacity-50" />
+                        <p className="mt-2 text-xs text-muted-foreground">Map loading…</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-between border-t border-border px-5 py-3">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
