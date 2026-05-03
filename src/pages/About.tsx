@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { Compass, Layers, Rocket, Heart } from "lucide-react";
 import MeshBackground from "@/components/effects/MeshBackground";
@@ -14,8 +15,46 @@ const values = [
 
 const AboutPage = () => (
   <>
-    <title>About — CodeValceno</title>
-    <meta name="description" content="A senior software studio building durable digital products from Al Khobar, Saudi Arabia." />
+    <Helmet>
+      <title>About Us — CodeValceno</title>
+      <meta name="description" content="A senior software studio building durable digital products from Al Khobar, Saudi Arabia. 50+ launches, 12+ countries, 5+ years." />
+      <link rel="canonical" href="https://codevalceno.com/about" />
+      <meta name="robots" content="index, follow" />
+      <meta property="og:title" content="About Us — CodeValceno" />
+      <meta property="og:description" content="A senior software studio building durable digital products from Al Khobar, Saudi Arabia. 50+ launches, 12+ countries, 5+ years." />
+      <meta property="og:url" content="https://codevalceno.com/about" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://codevalceno.com/og-image.png" />
+      <meta property="og:site_name" content="CodeValceno" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="About Us — CodeValceno" />
+      <meta name="twitter:description" content="A senior software studio building durable digital products from Al Khobar, Saudi Arabia. 50+ launches, 12+ countries, 5+ years." />
+      <meta name="twitter:image" content="https://codevalceno.com/og-image.png" />
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "CodeValceno",
+          "url": "https://codevalceno.com",
+          "logo": "https://codevalceno.com/favicon.svg",
+          "description": "A senior software studio building durable digital products from Al Khobar, Saudi Arabia.",
+          "foundingDate": "2021",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "King Fahd Rd",
+            "addressLocality": "Al Khobar",
+            "postalCode": "34429",
+            "addressCountry": "SA"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+966-56-400-5383",
+            "contactType": "customer service",
+            "availableLanguage": ["English", "Arabic"]
+          }
+        })}
+      </script>
+    </Helmet>
 
     <section className="relative overflow-hidden pt-32 pb-20 md:pt-40 md:pb-28">
       <MeshBackground />

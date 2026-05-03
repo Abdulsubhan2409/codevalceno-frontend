@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -86,6 +87,14 @@ const ContactPage = () => {
 
   return (
     <>
+    <Helmet>
+  <title>Contact Us - CodeValceno</title>
+  <meta name="description" content="Get in touch with CodeValceno for your next project." />
+  <link rel="canonical" href="https://codevalceno.com/contact" />
+  <meta property="og:title" content="Contact Us - CodeValceno" />
+  <meta property="og:url" content="https://codevalceno.com/contact" />
+  <meta property="og:type" content="website" />
+</Helmet>
       {/* Hero */}
       <section className="relative overflow-hidden pt-32 pb-12 md:pt-40">
         <MeshBackground withGrid={false} />
