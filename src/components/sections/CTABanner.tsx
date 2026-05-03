@@ -20,7 +20,6 @@ const CTABanner = () => {
   const glassY = useTransform(sy, [-1, 1], [6, -6]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // ✅ Skip on mobile - no mouse anyway
     if (isMobile) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -46,42 +45,40 @@ const CTABanner = () => {
             className="relative overflow-hidden rounded-3xl px-8 py-16 text-center md:px-16 md:py-24"
             style={{ background: "var(--gradient-brand)" }}
           >
-            {/* ✅ Video — disabled on mobile, lazy on desktop */}
-            {!isMobile && (
+            {/* ✅ Video — shows on all devices, optimized with preload="none" */}
+            <motion.div
+              aria-hidden
+              className="absolute inset-0"
+              style={{ x: videoX, y: videoY, scale: 1.08 }}
+            >
               <motion.div
-                aria-hidden
                 className="absolute inset-0"
-                style={{ x: videoX, y: videoY, scale: 1.08 }}
+                animate={{
+                  scale: [1, 1.04, 1],
+                  x: [0, -8, 0],
+                  y: [0, 6, 0],
+                }}
+                transition={{
+                  duration: 18,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
               >
-                <motion.div
-                  className="absolute inset-0"
-                  animate={{
-                    scale: [1, 1.04, 1],
-                    x: [0, -8, 0],
-                    y: [0, 6, 0],
-                  }}
-                  transition={{
-                    duration: 18,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="none"
+                  aria-hidden
+                  disablePictureInPicture
+                  disableRemotePlayback
+                  className="absolute inset-0 h-full w-full object-cover"
                 >
-                  <video
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="none"         // ✅ Don't preload
-                    aria-hidden
-                    disablePictureInPicture
-                    disableRemotePlayback
-                    className="absolute inset-0 h-full w-full object-cover"
-                  >
-                    <source src="/videos/codevalceno-coding-loop.mp4.mp4" type="video/mp4" />
-                  </video>
-                </motion.div>
+                  <source src="/videos/codevalceno-coding-loop.mp4.mp4" type="video/mp4" />
+                </video>
               </motion.div>
-            )}
+            </motion.div>
 
             {/* Glass sheen */}
             <motion.div
