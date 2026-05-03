@@ -69,7 +69,7 @@ const CTABanner = () => {
                   loop
                   muted
                   playsInline
-                  preload="none"
+                  preload="metadata"
                   aria-hidden
                   disablePictureInPicture
                   disableRemotePlayback
