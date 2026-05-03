@@ -21,8 +21,7 @@ const Particles = ({ count = 60 }: { count?: number }) => {
 
     let raf = 0;
     let dots: Dot[] = [];
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
-
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const resize = () => {
       const parent = canvas.parentElement;
       if (!parent) return;
