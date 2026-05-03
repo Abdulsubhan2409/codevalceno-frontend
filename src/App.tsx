@@ -4,13 +4,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
-import Index from "./pages/Index";
-import ServicesPage from "./pages/Services";
-import ProjectsPage from "./pages/Projects";
-import AboutPage from "./pages/About";
-import ContactPage from "./pages/Contact";
-import NotFound from "./pages/NotFound";
-import AdminPanel from "@/pages/AdminPanel";
+import { lazy, Suspense } from "react";
+
+// ✅ Lazy load all pages
+const Index = lazy(() => import("./pages/Index"));
+const ServicesPage = lazy(() => import("./pages/Services"));
+const ProjectsPage = lazy(() => import("./pages/Projects"));
+const AboutPage = lazy(() => import("./pages/About"));
+const ContactPage = lazy(() => import("./pages/Contact"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminPanel = lazy(() => import("@/pages/AdminPanel"));
 
 const queryClient = new QueryClient();
 
@@ -20,22 +23,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-
-          {/* ✅ Admin — outside Layout, no navbar */}
-          <Route path="/admin" element={<AdminPanel />} />
-
-          {/* All other pages — inside Layout, with navbar */}
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-
-        </Routes>
+        <Suspense fallback={<div className="min-h-screen bg-[#080B14]" />}>
+          <Routes>
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
