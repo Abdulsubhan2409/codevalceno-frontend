@@ -84,7 +84,7 @@ const AboutPage = () => (
             <div className="relative grid grid-cols-2 gap-4 rounded-2xl border border-border bg-surface/80 p-6 backdrop-blur-xl">
               {[
                 { v: 50, suf: "+", l: "Projects" },
-                { v: 12, suf: "+", l: "Countries" },
+                { v: 6, suf: "+", l: "Countries" },
                 { v: 5, suf: "+", l: "Years" },
                 { v: 98, suf: "%", l: "Retention" },
               ].map((s, i) => (
