@@ -131,7 +131,7 @@ const Hero = () => {
           >
             {[
               { v: 50, suf: "+", label: "Projects shipped" },
-              { v: 12, suf: "+", label: "Countries served" },
+             { v: 6, suf: "+", label: "Countries served" },
               { v: 5, suf: "+", label: "Years building" },
             ].map((s) => (
               <div key={s.label}>
