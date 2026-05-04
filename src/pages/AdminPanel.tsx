@@ -2,12 +2,23 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, FolderKanban, Mail, Users, BookOpen,
   LogOut, Plus, Search, Eye, Trash2, Edit, Bell, X,
-  Send, CheckCircle, ArrowLeft, ChevronDown,
+  Send, CheckCircle, ArrowLeft,
 } from "lucide-react";
 
 const API = "https://admin.codevalceno.com/api";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Session Config ────────────────────────────────────────────────────────
+const SESSION_HOURS = 1;
+const SESSION_DURATION = SESSION_HOURS * 60 * 60 * 1000;
+
+const checkSession = () => {
+  const loginTime = localStorage.getItem("cv_login_time");
+  if (!loginTime) return false;
+  const elapsed = Date.now() - parseInt(loginTime);
+  return elapsed < SESSION_DURATION;
+};
+
+// ─── Types ─────────────────────────────────────────────────────────────────
 interface Project { id: number; title: string; type: string; country: string; status: string; tech: string[]; }
 interface Message { id: number; name: string; full_name: string; email: string; type: string; project_type: string; budget: string; budget_range: string; message: string; company: string; phone: string; status: string; date: string; created_at: string; }
 interface TeamMember { id: number; name: string; role: string; email: string; status: string; }
@@ -22,7 +33,7 @@ const navItems = [
   { id: "blog", label: "Blog", icon: BookOpen },
 ];
 
-// ─── Modal ────────────────────────────────────────────────────────────────────
+// ─── Modal ─────────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
   <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
     <div style={{ background: "#0d1120", border: "0.5px solid rgba(0,229,255,0.2)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}>
@@ -41,7 +52,9 @@ const btnPrimary: React.CSSProperties = { background: "#00e5ff", color: "#080b14
 const btnGhost: React.CSSProperties = { background: "transparent", color: "#64748b", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px 20px", fontSize: 13, cursor: "pointer", width: "100%" };
 
 export default function AdminPanel() {
-  const [authed, setAuthed] = useState(!!localStorage.getItem("cv_token"));
+  const [authed, setAuthed] = useState(
+    !!localStorage.getItem("cv_token") && checkSession()
+  );
   const [token, setToken] = useState(localStorage.getItem("cv_token") || "");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -49,6 +62,7 @@ export default function AdminPanel() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [search, setSearch] = useState("");
+  const [sessionTimeLeft, setSessionTimeLeft] = useState("");
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -58,7 +72,6 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // ─── Modal states
   const [projectModal, setProjectModal] = useState(false);
   const [teamModal, setTeamModal] = useState(false);
   const [blogModal, setBlogModal] = useState(false);
@@ -69,10 +82,49 @@ export default function AdminPanel() {
   const [replyText, setReplyText] = useState("");
   const [replySent, setReplySent] = useState(false);
 
-  // ─── Form states
   const [pForm, setPForm] = useState({ title: "", type: "", country: "", status: "In Progress", tech: "" });
   const [tForm, setTForm] = useState({ name: "", role: "", email: "", status: "Active" });
   const [bForm, setBForm] = useState({ title: "", content: "", status: "Draft" });
+
+  // ─── Logout ───────────────────────────────────────────────────────────────
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("cv_token");
+    localStorage.removeItem("cv_login_time");
+    setToken("");
+    setAuthed(false);
+  }, []);
+
+  // ─── Auto session expiry checker (every 60 seconds) ───────────────────────
+  useEffect(() => {
+    if (!authed) return;
+    const interval = setInterval(() => {
+      if (!checkSession()) {
+        alert("Your session has expired after 1 hour. Please log in again.");
+        handleLogout();
+      }
+    }, 60 * 1000);
+    return () => clearInterval(interval);
+  }, [authed, handleLogout]);
+
+  // ─── Session countdown timer (shows remaining time in topbar) ─────────────
+  useEffect(() => {
+    if (!authed) return;
+    const updateCountdown = () => {
+      const loginTime = localStorage.getItem("cv_login_time");
+      if (!loginTime) return;
+      const remaining = SESSION_DURATION - (Date.now() - parseInt(loginTime));
+      if (remaining <= 0) {
+        setSessionTimeLeft("Expired");
+        return;
+      }
+      const mins = Math.floor(remaining / 60000);
+      const secs = Math.floor((remaining % 60000) / 1000);
+      setSessionTimeLeft(`${mins}m ${secs}s`);
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [authed]);
 
   const authHeaders = useCallback(() => ({
     "Content-Type": "application/json",
@@ -111,6 +163,7 @@ export default function AdminPanel() {
 
   useEffect(() => { if (authed) fetchAll(); }, [authed, fetchAll]);
 
+  // ─── Login ────────────────────────────────────────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -121,12 +174,17 @@ export default function AdminPanel() {
       const data = await res.json();
       if (res.ok && data.token) {
         localStorage.setItem("cv_token", data.token);
-        setToken(data.token); setAuthed(true); setLoginError("");
-      } else { setLoginError(data.message || "Invalid email or password."); }
-    } catch { setLoginError("Cannot connect to server."); }
+        localStorage.setItem("cv_login_time", Date.now().toString()); // ← saves timestamp
+        setToken(data.token);
+        setAuthed(true);
+        setLoginError("");
+      } else {
+        setLoginError(data.message || "Invalid email or password.");
+      }
+    } catch {
+      setLoginError("Cannot connect to server.");
+    }
   };
-
-  const handleLogout = () => { localStorage.removeItem("cv_token"); setToken(""); setAuthed(false); };
 
   const deleteItem = async (endpoint: string, id: number) => {
     if (!confirm("Are you sure?")) return;
@@ -148,35 +206,32 @@ export default function AdminPanel() {
     if (m.status === "unread") await markMessageRead(m.id);
   };
 
- const sendReply = async () => {
-  if (!replyText.trim() || !selectedMessage) return;
-
-  try {
-    const res = await fetch(`${API}/messages/${selectedMessage.id}/reply`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({
-        replyText,
-        toEmail: selectedMessage.email,
-        toName: selectedMessage.full_name || selectedMessage.name,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert("Failed to send: " + (err.error || "Unknown error"));
-      return;
+  const sendReply = async () => {
+    if (!replyText.trim() || !selectedMessage) return;
+    try {
+      const res = await fetch(`${API}/messages/${selectedMessage.id}/reply`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          replyText,
+          toEmail: selectedMessage.email,
+          toName: selectedMessage.full_name || selectedMessage.name,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Failed to send: " + (err.error || "Unknown error"));
+        return;
+      }
+      setReplySent(true);
+      setReplyText("");
+      fetchAll();
+    } catch {
+      alert("Network error. Is your server running?");
     }
+  };
 
-    setReplySent(true);
-    setReplyText("");
-    fetchAll();
-  } catch {
-    alert("Network error. Is your server running?");
-  }
-};
-
-  // ─── Project CRUD
+  // ─── Project CRUD ─────────────────────────────────────────────────────────
   const openAddProject = () => { setEditingProject(null); setPForm({ title: "", type: "", country: "", status: "In Progress", tech: "" }); setProjectModal(true); };
   const openEditProject = (p: Project) => { setEditingProject(p); setPForm({ title: p.title, type: p.type, country: p.country, status: p.status, tech: Array.isArray(p.tech) ? p.tech.join(", ") : "" }); setProjectModal(true); };
   const saveProject = async () => {
@@ -189,7 +244,7 @@ export default function AdminPanel() {
     setProjectModal(false); fetchAll();
   };
 
-  // ─── Team CRUD
+  // ─── Team CRUD ────────────────────────────────────────────────────────────
   const openAddMember = () => { setEditingMember(null); setTForm({ name: "", role: "", email: "", status: "Active" }); setTeamModal(true); };
   const openEditMember = (m: TeamMember) => { setEditingMember(m); setTForm({ name: m.name, role: m.role, email: m.email, status: m.status }); setTeamModal(true); };
   const saveMember = async () => {
@@ -201,7 +256,7 @@ export default function AdminPanel() {
     setTeamModal(false); fetchAll();
   };
 
-  // ─── Blog CRUD
+  // ─── Blog CRUD ────────────────────────────────────────────────────────────
   const openAddPost = () => { setEditingPost(null); setBForm({ title: "", content: "", status: "Draft" }); setBlogModal(true); };
   const openEditPost = (p: BlogPost) => { setEditingPost(p); setBForm({ title: p.title, content: p.content || "", status: p.status }); setBlogModal(true); };
   const savePost = async () => {
@@ -222,7 +277,8 @@ export default function AdminPanel() {
           <div style={{ fontSize: 13, color: "#64748b" }}>Admin Panel — Restricted Access</div>
         </div>
         <div style={{ background: "#0d1120", border: "0.5px solid rgba(0,229,255,0.15)", borderRadius: 16, padding: "32px 28px" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: "#e2e8f0", margin: "0 0 24px" }}>Sign in</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: "#e2e8f0", margin: "0 0 8px" }}>Sign in</h2>
+          <p style={{ fontSize: 12, color: "#64748b", margin: "0 0 24px" }}>Session expires after 1 hour of login.</p>
           <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div><label style={labelStyle}>Email</label><input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="admin@codevalceno.com" style={inputStyle} /></div>
             <div><label style={labelStyle}>Password</label><input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="••••••••" style={inputStyle} /></div>
@@ -252,7 +308,6 @@ export default function AdminPanel() {
             </div>
             <span style={{ marginLeft: "auto", fontSize: 11, fontWeight: 500, borderRadius: 999, padding: "3px 10px", background: selectedMessage.status === "replied" ? "rgba(167,139,250,0.15)" : "rgba(52,211,153,0.15)", color: selectedMessage.status === "replied" ? "#a78bfa" : "#34d399" }}>{selectedMessage.status}</span>
           </div>
-
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
             {[
               { label: "Company", value: selectedMessage.company || "—" },
@@ -267,14 +322,11 @@ export default function AdminPanel() {
               </div>
             ))}
           </div>
-
           <div style={{ background: "#080b14", borderRadius: 10, padding: "16px 18px" }}>
             <div style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10 }}>Message</div>
             <p style={{ fontSize: 14, lineHeight: 1.7, color: "#cbd5e1", margin: 0 }}>{selectedMessage.message || "No message content."}</p>
           </div>
         </div>
-
-        {/* Reply Box */}
         {replySent ? (
           <div style={{ background: "rgba(52,211,153,0.1)", border: "0.5px solid rgba(52,211,153,0.3)", borderRadius: 12, padding: 20, display: "flex", alignItems: "center", gap: 12 }}>
             <CheckCircle size={20} color="#34d399" />
@@ -286,13 +338,7 @@ export default function AdminPanel() {
         ) : (
           <div style={{ background: "#0d1120", border: "0.5px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: 24 }}>
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12 }}>Reply to {selectedMessage.email}</div>
-            <textarea
-              rows={5}
-              value={replyText}
-              onChange={e => setReplyText(e.target.value)}
-              placeholder="Type your reply..."
-              style={{ ...inputStyle, resize: "vertical", marginBottom: 12 }}
-            />
+            <textarea rows={5} value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Type your reply..." style={{ ...inputStyle, resize: "vertical", marginBottom: 12 }} />
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={sendReply} disabled={!replyText.trim()} style={{ ...btnPrimary, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: replyText.trim() ? 1 : 0.5 }}>
                 <Send size={14} /> Send Reply
@@ -342,13 +388,21 @@ export default function AdminPanel() {
 
       {/* Main */}
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+
         {/* Topbar */}
         <div style={{ height: 56, borderBottom: "0.5px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", padding: "0 24px", gap: 12, background: "#0d1120" }}>
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#080b14", border: "0.5px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 12px", maxWidth: 320 }}>
             <Search size={14} color="#64748b" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…" style={{ background: "none", border: "none", outline: "none", color: "#e2e8f0", fontSize: 13, width: "100%" }} />
           </div>
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
+
+            {/* Session countdown badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0,229,255,0.08)", border: "0.5px solid rgba(0,229,255,0.2)", borderRadius: 8, padding: "4px 10px" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#00e5ff" }} />
+              <span style={{ fontSize: 11, color: "#00e5ff", fontWeight: 500, whiteSpace: "nowrap" }}>Session: {sessionTimeLeft}</span>
+            </div>
+
             <button style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", position: "relative" }}>
               <Bell size={16} />
               {unreadCount > 0 && <span style={{ position: "absolute", top: -2, right: -2, width: 6, height: 6, background: "#00e5ff", borderRadius: "50%" }} />}
@@ -454,7 +508,7 @@ export default function AdminPanel() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {messages.filter(m => (m.full_name || m.name)?.toLowerCase().includes(search.toLowerCase())).map(m => (
-                  <div key={m.id} onClick={() => openMessage(m)} style={{ background: "#0d1120", border: `0.5px solid ${m.status === "unread" ? "rgba(0,229,255,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", gap: 16, cursor: "pointer", transition: "border-color 0.15s" }}>
+                  <div key={m.id} onClick={() => openMessage(m)} style={{ background: "#0d1120", border: `0.5px solid ${m.status === "unread" ? "rgba(0,229,255,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }}>
                     <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,229,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "#00e5ff", flexShrink: 0 }}>{(m.full_name || m.name || "?")[0]}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
@@ -482,7 +536,7 @@ export default function AdminPanel() {
                 <div><h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 4px" }}>Team</h1><p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>{team.length} members</p></div>
                 <button onClick={openAddMember} style={{ display: "flex", alignItems: "center", gap: 6, background: "#00e5ff", color: "#080b14", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><Plus size={14} /> Add member</button>
               </div>
-              {team.length === 0 && <div style={{ textAlign: "center", padding: 48, color: "#64748b", fontSize: 13 }}>No team members yet. Click "Add member" to get started.</div>}
+              {team.length === 0 && <div style={{ textAlign: "center", padding: 48, color: "#64748b", fontSize: 13 }}>No team members yet.</div>}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
                 {team.filter(m => m.name?.toLowerCase().includes(search.toLowerCase())).map(m => (
                   <div key={m.id} style={{ background: "#0d1120", border: "0.5px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 20 }}>
@@ -529,7 +583,7 @@ export default function AdminPanel() {
                         </td>
                       </tr>
                     ))}
-                    {posts.length === 0 && <tr><td colSpan={5} style={{ padding: 32, textAlign: "center", color: "#64748b", fontSize: 13 }}>No posts yet. Click "New post" to get started.</td></tr>}
+                    {posts.length === 0 && <tr><td colSpan={5} style={{ padding: 32, textAlign: "center", color: "#64748b", fontSize: 13 }}>No posts yet.</td></tr>}
                   </tbody>
                 </table>
               </div>
