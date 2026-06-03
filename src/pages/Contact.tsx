@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 const API = "https://admin.codevalceno.com/api";
 
 const projectTypes = ["Web Application", "Mobile App", "UI / UX Design", "Cloud & DevOps", "AI Integration", "Other"] as const;
-const budgets = ["< $5k", "$5k – $15k", "$15k – $50k", "$50k – $150k", "$150k+","Not sure yet",] as const;
+const budgets = ["< SAR 5k", "SAR 5k – 15k", "SAR 15k – 50k", "SAR 50k – 150k", "SAR 150k+", "Not sure yet"] as const;
 
 const schema = z.object({
   full_name: z.string().trim().min(2, "Please enter your full name").max(120),
