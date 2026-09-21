@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 const API = "https://admin.codevalceno.com/api";
 
 const projectTypes = ["Web Application", "Mobile App", "UI / UX Design", "Cloud & DevOps", "AI Integration", "Other"] as const;
-const budgets = ["< SAR 5k", "SAR 5k – 15k", "SAR 15k – 50k", "SAR 50k – 150k", "SAR 150k+", "Not sure yet"] as const;
 
 const schema = z.object({
   full_name: z.string().trim().min(2, "Please enter your full name").max(120),
@@ -20,7 +19,6 @@ const schema = z.object({
   company: z.string().trim().max(120).optional().or(z.literal("")),
   phone: z.string().trim().max(40).optional().or(z.literal("")),
   project_type: z.enum(projectTypes, { required_error: "Pick a project type" }),
-  budget_range: z.enum(budgets, { required_error: "Pick a budget" }),
   message: z.string().trim().min(10, "Tell us a bit more (10+ chars)").max(4000),
 });
 
@@ -72,7 +70,6 @@ const ContactPage = () => {
           company: values.company || "",
           phone: values.phone || "",
           project_type: values.project_type,
-          budget_range: values.budget_range,
           message: values.message,
         }),
       });
@@ -193,23 +190,13 @@ const ContactPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <div>
-                      <label className="label-eyebrow mb-2 block text-[11px]">Project type</label>
-                      <select className={fieldClass} defaultValue="" {...register("project_type")}>
-                        <option value="" disabled>Select…</option>
-                        {projectTypes.map((p) => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                      {errors.project_type && <p className="mt-1.5 text-xs text-destructive">{errors.project_type.message as string}</p>}
-                    </div>
-                    <div>
-                      <label className="label-eyebrow mb-2 block text-[11px]">Budget range</label>
-                      <select className={fieldClass} defaultValue="" {...register("budget_range")}>
-                        <option value="" disabled>Select…</option>
-                        {budgets.map((b) => <option key={b} value={b}>{b}</option>)}
-                      </select>
-                      {errors.budget_range && <p className="mt-1.5 text-xs text-destructive">{errors.budget_range.message as string}</p>}
-                    </div>
+                  <div>
+                    <label className="label-eyebrow mb-2 block text-[11px]">Project type</label>
+                    <select className={fieldClass} defaultValue="" {...register("project_type")}>
+                      <option value="" disabled>Select…</option>
+                      {projectTypes.map((p) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                    {errors.project_type && <p className="mt-1.5 text-xs text-destructive">{errors.project_type.message as string}</p>}
                   </div>
 
                   <div>
